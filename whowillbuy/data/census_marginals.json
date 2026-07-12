@@ -1,0 +1,81 @@
+{
+  "_README": "age/gender/education/urban_rural 为【真实七普(2020)边际】、city_tier 为【第一财经商业城市分级 × 七普人口校准】、income_band/occupation 为【公开数据近似(建模估计，置信度较低)】——来源与口径均见 _data_sources。target_proportions 每个变量内部≈1。变量与分箱可按业务调整，但改类别名/数量需同步改 ipf_skeleton.build_seed_sample 的硬编码概率。",
+  "_data_sources": {
+    "census": "国家统计局 第七次全国人口普查公报（2020），http://www.gov.cn/guoqing/2021-05/13/content_5606149.htm ；受教育程度细分取自《中国人口普查年鉴-2020》长表。",
+    "age": "公报第五号(年龄构成)+5岁年龄组细表，合并到项目 18+ 分箱；底=18岁及以上人口≈11.13亿。18-19岁按15-19组均匀切分估算（近似项，非普查原值）。",
+    "gender": "公报第四号(性别构成)：男 723,339,956(51.24%) / 女 688,438,768(48.76%)，全人口口径。",
+    "education": "公报第六号 + 普查年鉴细分：底=15岁及以上人口 1,156,394,786。高中及以下=未上学+小学+初中+高中(含中专)；大专/本科/研究生分列。注意学历底为15+，与age的18+底略有口径差。",
+    "urban_rural": "公报第七号(城乡人口)：城镇 901,991,162(63.89%) / 乡村 509,787,562(36.11%)，全人口口径。与 city_tier 是两个独立维度（城乡=普查口径，city_tier=商业城市分级）。",
+    "city_tier": "第一财经·新一线城市研究所《城市商业魅力排行榜2020》(一线4/新一线15/二线30/三线70/四线90/五线128，共337地级以上城市) × 七普各线城市常住人口：一线8299万、新一线18118万、二线24528万。tier1=一线+新一线、tier2=二线、tier3plus=三线及以下。非普查官方口径。",
+    "income_band": "近似(建模)：国家统计局2020五等份人均可支配收入(月均656/1370/2187/3431/6691元)按月分箱估计；家庭人均可支配收入口径(非个人工资)，约84%落<5k。来源 https://www.stats.gov.cn/sj/zxfb/202302/t20230203_1900970.html",
+    "occupation": "近似(建模)：以2020三次产业就业比重(一产≈23%/二产≈29%/三产≈48%)为锚，三产内部 service/white_collar/professional 拆分及 student/retired/非就业为估计。置信度低，生产用需普查长表职业大类或自有调研。",
+    "_confidence": "高(普查直采)：age/gender/education/urban_rural；中(商业分级×普查人口)：city_tier；低(公开汇总+建模估计)：income_band/occupation。"
+  },
+  "population_total": 100000,
+  "household_controls": {
+    "_README": "户级边际：家庭户规模分布，供 ipu.py 做『户—个人两级一致』的户级约束（ipf_skeleton 不读此段）。占比每口径内≈1。",
+    "_source": "《中国人口普查年鉴-2020》表 5-1『全国不同规模的家庭户类别』(全部数据/全样本)，及其城市(5-1a)/镇(5-1b)/乡村(5-1c)分表。家庭户总数 494,157,423。",
+    "_confidence": "高(普查直采全样本)。已交叉核对：全国一人户=0.2539、加权平均户规模≈2.62，均与七普公报一致。",
+    "_urban_rural_note": "urban=城市+镇(城镇口径，与 master_hh rural=0 一致)、rural=乡村；与项目 urban_rural 维同口径。",
+    "household_size": {
+      "categories": ["1人户", "2人户", "3人户", "4人户", "5人户及以上"],
+      "national": [0.2539, 0.2968, 0.2099, 0.1317, 0.1076],
+      "by_urban_rural": {
+        "urban": [0.2624, 0.2928, 0.2190, 0.1303, 0.0955],
+        "rural": [0.2396, 0.3036, 0.1944, 0.1342, 0.1281]
+      },
+      "total_households": 494157423,
+      "mean_size": 2.62
+    },
+    "urban_rural": {
+      "_note": "户级城乡占比（户数口径，urban=城市+镇）。与 variables.urban_rural 是人口口径(63.89/36.11)不同——户级因乡村户更大而 urban 略低。供 ipu.py --household 把 urban_rural 升为户级约束。",
+      "categories": ["urban", "rural"],
+      "proportions": [0.6281, 0.3719]
+    }
+  },
+  "var_order": ["age", "gender", "city_tier", "urban_rural", "education", "income_band", "occupation"],
+  "variables": {
+    "age": {
+      "_source": "census-7th-2020 (18+ 重算，含18-19近似)",
+      "categories": ["18-24", "25-34", "35-44", "45-54", "55-64", "65+"],
+      "target_proportions": [0.1095, 0.2006, 0.1862, 0.2000, 0.1325, 0.1712]
+    },
+    "gender": {
+      "_source": "census-7th-2020 公报第四号",
+      "categories": ["male", "female"],
+      "target_proportions": [0.5124, 0.4876]
+    },
+    "city_tier": {
+      "_source": "第一财经·新一线城市研究所《城市商业魅力排行榜2020》分级 × 七普城市常住人口。映射：tier1=一线4+新一线15城(≈2.64亿)、tier2=二线30城(≈2.45亿)、tier3plus=三线及以下(≈9.02亿)，除以全国14.10亿。注意：商业分级非普查官方口径，分级名单逐年微调；tier→桶的归并是分析口径选择。",
+      "categories": ["tier1", "tier2", "tier3plus"],
+      "target_proportions": [0.1871, 0.1737, 0.6392]
+    },
+    "urban_rural": {
+      "_source": "census-7th-2020 公报第七号",
+      "categories": ["urban", "rural"],
+      "target_proportions": [0.6389, 0.3611]
+    },
+    "education": {
+      "_source": "census-7th-2020 公报第六号+年鉴细分 (15+ 底)",
+      "categories": ["highschool_below", "college", "bachelor", "postgrad"],
+      "target_proportions": [0.8122, 0.0971, 0.0814, 0.0093]
+    },
+    "income_band": {
+      "_approx": true,
+      "_source": "近似(建模，置信度低)：国家统计局《2020年居民收入和消费支出情况》五等份人均可支配收入(低/中下/中/中上/高 = 7869/16443/26249/41172/80294 元/年 → 月均 656/1370/2187/3431/6691)，按月收入分箱估计。口径=家庭人均可支配收入(含非劳动人口与转移性收入)，整体低于个人工资，故约84%落 <5k；若要『个人工资』口径无公开分布，需自有调研。",
+      "categories": ["<5k", "5-10k", "10-20k", "20-40k", "40k+"],
+      "target_proportions": [0.84, 0.11, 0.04, 0.008, 0.002]
+    },
+    "occupation": {
+      "_approx": true,
+      "_source": "近似(建模，置信度低)：以2020三次产业就业比重(一产≈23%/二产≈29%/三产≈48%，国家统计局)为锚——blue_collar=一二产，service/white_collar/professional 为三产内部估计拆分；student/retired 按18+在校生与老年不工作人口估计；非就业(家务/失业)按就业职业结构摊入。生产用需普查长表职业大类或自有调研。",
+      "categories": ["student", "blue_collar", "service", "white_collar", "professional", "retired"],
+      "target_proportions": [0.04, 0.42, 0.24, 0.08, 0.06, 0.16]
+    }
+  },
+  "_structural_zeros_README": "结构性零约束：逻辑上不可能的组合。seed_to_table 后把满足 conditions(各变量取值同时命中=AND，单变量内取值任一命中=OR) 的单元格强制置 0 且不平滑，再跑 IPF。这是把『不自洽组合』从联合分布中物理删除，区别于 Laplace 平滑只是压低概率。正式版按真实业务规则增删。",
+  "structural_zeros": [
+    {"comment": "在校学生不会是 45 岁以上", "conditions": {"occupation": ["student"], "age": ["45-54", "55-64", "65+"]}},
+    {"comment": "退休人群不会在 45 岁以下", "conditions": {"occupation": ["retired"], "age": ["18-24", "25-34", "35-44"]}}
+  ]
+}

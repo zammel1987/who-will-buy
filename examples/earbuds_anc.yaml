@@ -1,0 +1,8 @@
+# 示例②：入耳式降噪耳机（带目标市场过滤）
+name: 入耳式主动降噪耳机
+category: 消费电子 / 音频
+description: 45dB 深度主动降噪，单次续航 10 小时，支持双设备连接，通勤地铁场景专项调校。
+price_points: [299, 499, 699, 899]
+main_price: 499
+market:
+  city_tier: [tier1, tier2]   # 只看一二线城市人群
